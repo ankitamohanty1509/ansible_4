@@ -1,0 +1,30 @@
+- name: Create a new user and grant sudo privileges
+  hosts: all
+  become: yes
+  gather_facts: yes
+
+  vars:
+    new_username: devopsuser
+    user_shell: /bin/bash
+
+  tasks:
+    - name: Set sudo group based on OS
+      set_fact:
+        sudo_group: "{{ 'sudo' if ansible_os_family == 'Debian' else 'wheel' }}"
+
+    - name: Create a user with home directory
+      user:
+        name: "{{ new_username }}"
+        shell: "{{ user_shell }}"
+        create_home: yes
+        state: present
+        groups: "{{ sudo_group }}"
+        append: yes
+
+    - name: Ensure home directory permissions
+      file:
+        path: "/home/{{ new_username }}"
+        state: directory
+        mode: '0755'
+        owner: "{{ new_username }}"
+        group: "{{ new_username }}"
